@@ -77,6 +77,38 @@ async function writeCache(hash, obj) {
     }
 }
 
+// Simple rate limiter: max 8 requests per minute to LRCLib
+const lrclibQueue = [];
+let lrclibRunning = 0;
+const LRCLIB_MAX_CONCURRENT = 2;
+const LRCLIB_WINDOW_MS = 60000;
+const LRCLIB_MAX_PER_WINDOW = 8;
+const lrclibTimestamps = [];
+
+function lrclibWait() {
+    return new Promise(resolve => {
+        lrclibQueue.push(resolve);
+        lrclibDrain();
+    });
+}
+
+function lrclibDrain() {
+    if (lrclibRunning >= LRCLIB_MAX_CONCURRENT) return;
+    const now = Date.now();
+    while (lrclibTimestamps.length && lrclibTimestamps[0] < now - LRCLIB_WINDOW_MS) lrclibTimestamps.shift();
+    if (lrclibTimestamps.length >= LRCLIB_MAX_PER_WINDOW) {
+        const waitMs = lrclibTimestamps[0] + LRCLIB_WINDOW_MS - now + 50;
+        setTimeout(lrclibDrain, waitMs);
+        return;
+    }
+    if (lrclibQueue.length === 0) return;
+    lrclibRunning++;
+    const next = lrclibQueue.shift();
+    lrclibTimestamps.push(Date.now());
+    setTimeout(() => { lrclibRunning--; lrclibDrain(); }, 100);
+    next();
+}
+
 async function fetchFromRemote(artist, track, album) {
     try {
         const pickSynced = (data) => {
@@ -215,18 +247,6 @@ async function getLyrics(track, artist, album) {
     return null;
 }
 
-function pruneOld() {
-    // Cache désormais persistant : pas de suppression automatique
-    ensureCacheDir();
-}
-
-function startCleanup() {
-    // Cache persistant : nettoyage désactivé
-    ensureCacheDir();
-}
-
-module.exports = { getLyrics, startCleanup };
-
 async function listCached() {
     ensureCacheDir();
     const out = [];
@@ -273,26 +293,4 @@ async function readEntryByFile(fileName) {
     }
 }
 
-module.exports = { getLyrics, startCleanup, listCached, readEntryByFile };
-
-async function tryVariants(track, artist, album) {
-    ensureCacheDir();
-    const hash = keyHash(artist, track, album);
-    const variants = generateVariants(track, artist);
-    for (const v of variants) {
-        try {
-            const syncedRaw = await fetchFromRemote(v.artist, v.track, album);
-            if (syncedRaw) {
-                const synced = minifyLRC(syncedRaw);
-                const obj = { track, artist, album: album || null, syncedLyrics: synced, timestamp: Date.now() };
-                await writeCache(hash, obj);
-                return { syncedLyrics: synced, used: v };
-            }
-        } catch (e) {
-            // continue to next variant
-        }
-    }
-    return null;
-}
-
-module.exports = { getLyrics, startCleanup, listCached, readEntryByFile, tryVariants };
+module.exports = { getLyrics, listCached, readEntryByFile };

@@ -161,6 +161,7 @@
       async function load() {
         try {
           const res  = await fetch("/api/messages");
+          if (!res.ok) throw new Error('HTTP ' + res.status);
           const msgs = await res.json();
 
           countEl.textContent = msgs.length === 0
@@ -187,7 +188,7 @@
       }
 
       function escHtml(str) {
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
       }
 
       document.getElementById("refreshBtn").addEventListener("click", load);

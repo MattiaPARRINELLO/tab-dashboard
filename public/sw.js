@@ -11,7 +11,11 @@ const HTML_URLS = ['/', '/screen', '/screen/low-end', '/index.html', '/screen.ht
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(PRECACHE_URLS.map((url) =>
+        cache.add(url).catch((e) => console.warn('[sw] precache skip:', url, e.message))
+      ))
+    )
   );
   self.skipWaiting();
 });
@@ -35,7 +39,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   // API requests, external, non-GET: network only
-  if (request.method !== 'GET' || !url.origin.startsWith(self.location.origin) || url.pathname.startsWith('/api/')) {
+  const isSameOrigin = url.hostname === self.location.hostname && url.port === self.location.port && url.protocol === self.location.protocol;
+  if (request.method !== 'GET' || !isSameOrigin || url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(request));
     return;
   }
@@ -101,7 +106,7 @@ self.addEventListener('notificationclick', (event) => {
       if (clientList.length > 0) {
         return clientList[0].focus();
       }
-      return clients.openWindow('/message.html');
+      return clients.openWindow('/screen');
     })
   );
 });

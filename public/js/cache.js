@@ -25,11 +25,12 @@
         return tr;
     }
 
-    function escapeHtml(s) { return (s + "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function escapeHtml(s) { return (s + "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
     async function load() {
         try {
             const res = await fetch('/api/lyrics-cache');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
             tbody.innerHTML = '';
             (data.list || []).forEach(item => {

@@ -82,7 +82,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static('public'));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // CORS
 app.use((req, res, next) => {
@@ -201,19 +201,26 @@ const TTL = {
 };
 const isFresh = (entry, ttl) => entry && (Date.now() - entry.ts) < ttl;
 
+let coordsInflight = null;
 async function getCoords() {
     if (isFresh(weatherCache.coords, TTL.coords)) return weatherCache.coords.data;
-
-    const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(VILLE)}&limit=1&appid=${OPENWEATHER_API_KEY}`;
-    const res = await fetchWithTimeout(url, 6000);
-    if (!res.ok) throw new Error(`OpenWeather geocoding HTTP ${res.status}`);
-    const data = await res.json();
-
-    if (!Array.isArray(data) || !data.length) throw new Error(`Ville introuvable : ${VILLE}`);
-    const { lat, lon } = data[0];
-    console.log(`[weather] Coordonnées ${VILLE} : ${lat}, ${lon}`);
-    weatherCache.coords = { data: { lat, lon }, ts: Date.now() };
-    return { lat, lon };
+    if (coordsInflight) return coordsInflight;
+    coordsInflight = (async () => {
+        const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(VILLE)}&limit=1&appid=${OPENWEATHER_API_KEY}`;
+        const res = await fetchWithTimeout(url, 6000);
+        if (!res.ok) throw new Error(`OpenWeather geocoding HTTP ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data) || !data.length) throw new Error(`Ville introuvable : ${VILLE}`);
+        const { lat, lon } = data[0];
+        console.log(`[weather] Coordonnées ${VILLE} : ${lat}, ${lon}`);
+        weatherCache.coords = { data: { lat, lon }, ts: Date.now() };
+        return { lat, lon };
+    })().catch(e => { coordsInflight = null; throw e; });
+    try {
+        return await coordsInflight;
+    } finally {
+        coordsInflight = null;
+    }
 }
 
 // ──────────────────────────────────────────────
@@ -392,12 +399,13 @@ app.get('/api/weather', async (req, res) => {
         if (!resp.ok) throw new Error(`OpenWeather weather HTTP ${resp.status}`);
         const data = await resp.json();
         if (!data.weather || !data.weather[0]) throw new Error('Réponse météo invalide');
+        if (data.main == null || typeof data.main.temp !== 'number') throw new Error('Réponse météo invalide: temp manquante');
 
-        const iconCode = data.weather[0].icon;
+        const iconCode = data.weather[0]?.icon || '04d';
         const payload = {
             name: VILLE_SHORT,
-            temp: Math.round(data.main.temp),
-            desc: data.weather[0].description,
+            temp: typeof data.main?.temp === 'number' ? Math.round(data.main.temp) : 0,
+            desc: data.weather[0]?.description || '',
             icon: weatherIconMap[iconCode] || 'cloudy',
         };
 
@@ -421,6 +429,7 @@ app.get('/api/forecast', async (req, res) => {
         if (!resp.ok) throw new Error(`OpenWeather forecast HTTP ${resp.status}`);
         const data = await resp.json();
         if (!data.list || !Array.isArray(data.list)) throw new Error('Réponse prévisions invalide');
+        if (data.list.length === 0) throw new Error('Prévisions vides');
 
         const list = data.list.slice(0, 5).map(f => ({
             dt: f.dt,
@@ -448,8 +457,9 @@ app.post('/api/music', async (req, res) => {
     if (!title || !artist) return res.sendStatus(400);
 
     // Si un morceau était en cours, enregistrer quand il s'est arrêté
-    if (currentMusic.title) {
-        lastMusicEndAt = (currentMusic.startTime || Date.now()) + (currentMusic.duration - currentMusic.position) * 1000;
+    const prevMusic = currentMusic;
+    if (prevMusic.title) {
+        lastMusicEndAt = (prevMusic.startTime || Date.now()) + (prevMusic.duration - prevMusic.position) * 1000;
         saveLastMusicEndAt();
     }
 
@@ -469,7 +479,6 @@ app.post('/api/music', async (req, res) => {
     // Répondre et émettre immédiatement (sans attendre la cover)
     res.sendStatus(200);
     io.emit('musicData', currentMusic);
-    io.emit('musicStateEnded', { lastMusicEndAt });
 
     // Chercher la cover de façon asynchrone, puis réémettre si trouvée
     fetchCover(title, artist).then(cover => {
@@ -733,7 +742,7 @@ const DEBUG_LOGS = [];
 const MAX_DEBUG_LOGS = 500;
 
 function captureLog(level, args) {
-    const entry = { level, msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '), ts: Date.now() };
+    const entry = { level, msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ').slice(0, 1000), ts: Date.now() };
     DEBUG_LOGS.push(entry);
     if (DEBUG_LOGS.length > MAX_DEBUG_LOGS) DEBUG_LOGS.splice(0, DEBUG_LOGS.length - MAX_DEBUG_LOGS);
 }
@@ -765,7 +774,8 @@ process.on('unhandledRejection', (reason) => {
 
 process.on('uncaughtException', (err) => {
     console.error('[process] Uncaught Exception:', err.message);
-    // Ne pas quitter — laisser Express continuer à servir
+    // Sortir après un délai pour laisser le temps aux logs d'être écrits
+    setTimeout(() => process.exit(1), 1000);
 });
 
 // ──────────────────────────────────────────────
@@ -777,7 +787,6 @@ if (OPENWEATHER_API_KEY) {
     getCoords().catch(e => console.error('[startup] Coordonnées :', e.message));
 }
 
-try { lyricsCache.startCleanup(); } catch (e) { console.error('[startup] Lyrics cache :', e); }
 
 server.listen(PORT, () => {
     console.log(`[server] http://localhost:${PORT}`);

@@ -649,7 +649,6 @@
       var lyricsInterval = null;
       var currentLyrics = [];
       var activeLyricIndex = -1;
-      var musicGeneration = 0;
       var lastMusicEndAt = localStorage.getItem("lastMusicEndAt") ? Number(localStorage.getItem("lastMusicEndAt")) : null;
       var idleTimer = null;
 
@@ -757,13 +756,14 @@
         preload.crossOrigin = "Anonymous";
         preload.onload = function () {
           if (gen !== coverGen) return;
-          coverEl.src = src;
+          coverEl.src = preload.src;
           setTimeout(function () { coverEl.classList.remove("fading"); }, 80);
           applyAlbumColors(preload);
         };
         preload.onerror = function () {
           if (gen !== coverGen) return;
           coverEl.classList.remove("fading");
+          coverEl.src = PLACEHOLDER_COVER;
         };
         preload.src = src;
       }
@@ -961,6 +961,7 @@
         if (musicTimeout) { clearTimeout(musicTimeout); musicTimeout = null; }
         if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
         stopLyricsSync();
+        currentSongKey = "";
         document.body.classList.remove("music-theme-active");
         albumColorWash.classList.remove("active");
         musicCard.classList.remove("visible");
@@ -989,7 +990,7 @@
             text = "Aucune musique depuis " + h + " h " + m + " min";
           } else {
             var d = Math.floor(elapsed / 86400);
-            var h = Math.floor((elapsed % 86400) / 3600);
+            h = Math.floor((elapsed % 86400) / 3600);
             text = "Aucune musique depuis " + d + " j " + h + " h";
           }
           subEl.textContent = text;
@@ -1022,7 +1023,6 @@
       socket.emit("requestMusicState");
 
       async function handleMusicData(data) {
-        musicGeneration++;
         var nextKey = (data.title || "") + "__" + (data.artist || "");
         var changed = nextKey !== currentSongKey;
 

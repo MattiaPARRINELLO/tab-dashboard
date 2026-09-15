@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
@@ -181,7 +183,7 @@
         content: "";
         position: fixed;
         inset: 0;
-        z-index: 0;
+        z-index: 2;
         pointer-events: none;
         opacity: 0.038;
         transition: opacity 0.4s ease;
@@ -212,7 +214,7 @@
             rgba(var(--album-ar), var(--album-ag), var(--album-ab), 0.08) 50%,
             transparent 80%
           );
-        will-change: transform, opacity, background;
+        will-change: transform, opacity;
         transform-origin: center;
         transition:
           opacity var(--theme-transition) var(--theme-ease),
@@ -372,7 +374,7 @@
       .dashboard {
         display: grid;
         grid-template-columns: repeat(12, 1fr);
-        grid-template-rows: repeat(10, 1fr);
+        grid-template-rows: repeat(11, 1fr);
         gap: var(--gap-md);
         padding: var(--gap-md);
         width: 100%;
@@ -681,7 +683,6 @@
         border: 1px solid
           rgba(var(--album-r), var(--album-g), var(--album-b), 0.1);
         transition:
-          grid-row var(--duration-normal) var(--ease-smooth),
           border-color var(--theme-transition) var(--ease-smooth);
       }
 
@@ -1878,7 +1879,7 @@
       #messageOverlay {
         position: fixed;
         inset: 0;
-        z-index: 1000;
+        z-index: 10000;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2087,11 +2088,13 @@
         };
       }
 
-      DEBUG._origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info };
-      console.log = debugCapture('log');
-      console.warn = debugCapture('warn');
-      console.error = debugCapture('error');
-      console.info = debugCapture('info');
+      if (!DEBUG._origConsole.log) {
+        DEBUG._origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info };
+        console.log = debugCapture('log');
+        console.warn = debugCapture('warn');
+        console.error = debugCapture('error');
+        console.info = debugCapture('info');
+      }
 
       window.onerror = function (message, source, lineno, colno, error) {
         console.error('[window.onerror]', message, 'at', source + ':' + lineno);
@@ -2438,10 +2441,10 @@
         fetch("/api/weather")
           .then((res) => res.json())
           .then((data) => {
-            weatherTempEl.textContent = `${data.temp}°C`;
+            weatherTempEl.textContent = `${data.temp ?? '--'}°C`;
             weatherConditionEl.textContent = data.desc || "";
             weatherLocationEl.textContent = data.name || "";
-            weatherIconEl.src = `/weather-icons/${data.icon}.svg`;
+            weatherIconEl.src = `/weather-icons/${data.icon || 'cloudy'}.svg`;
           })
           .catch(() => {
             weatherConditionEl.textContent = "Erreur météo";
@@ -2461,7 +2464,7 @@
           .then((res) => res.json())
           .then((data) => {
             forecastEl.innerHTML = "";
-            data.list.forEach((f, index) => {
+            (data.list || []).forEach((f, index) => {
               const time = new Date(f.dt * 1000).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -2471,13 +2474,17 @@
               item.className = "forecast-item";
               item.style.animationDelay = `${index * 50}ms`;
               item.innerHTML = `
-                <div class="forecast-time">${time}</div>
-                <img class="forecast-icon" src="/weather-icons/${
-                  f.icon
-                }.svg" alt="${f.description}" />
-                <div class="forecast-temp">${Math.round(f.temp)}°C</div>
-                <div class="forecast-desc">${f.description}</div>
+                <div class="forecast-time"></div>
+                <img class="forecast-icon" />
+                <div class="forecast-temp"></div>
+                <div class="forecast-desc"></div>
               `;
+              item.querySelector('.forecast-time').textContent = time;
+              const iconImg = item.querySelector('.forecast-icon');
+              iconImg.src = `/weather-icons/${f.icon}.svg`;
+              iconImg.alt = f.description || '';
+              item.querySelector('.forecast-temp').textContent = `${Math.round(f.temp)}°C`;
+              item.querySelector('.forecast-desc').textContent = f.description || '';
               forecastEl.appendChild(item);
             });
           })
@@ -3019,13 +3026,14 @@
         }
 
         // Fallback : prendre la moins grise si tout est terne
-        if (!best) {
+        if (!best && palette.length > 0) {
           best = palette.reduce((a, c) => {
             const [, sa] = rgbToHsl(...a);
             const [, sc] = rgbToHsl(...c);
             return sc > sa ? c : a;
           });
         }
+        if (!best) return [78, 205, 196]; // default cyan fallback
 
         // Booster : amener la saturation à 75% min, luminosité entre 45-60%
         let [h, s, l] = rgbToHsl(...best);
