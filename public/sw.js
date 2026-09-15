@@ -25,12 +25,6 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((names) =>
       Promise.all(names.map((n) => n !== CACHE_NAME ? caches.delete(n) : null))
     ).then(() => self.clients.claim())
-    .then(() => {
-      // Notify all clients to reload (fresh HTML after SW update)
-      return self.clients.matchAll().then(function(clients) {
-        clients.forEach(function(client) { client.postMessage({ action: 'sw-updated' }); });
-      });
-    })
   );
 });
 
