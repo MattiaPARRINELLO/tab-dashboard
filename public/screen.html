@@ -2459,7 +2459,7 @@
           .then((data) => {
             forecastEl.innerHTML = "";
             (data.list || []).forEach((f, index) => {
-              const time = new Date(f.dt * 1000).toLocaleTimeString([], {
+              const time = new Date(f.dt * 1000).toLocaleTimeString("fr-FR", {
                 hour: "2-digit",
                 minute: "2-digit",
               });

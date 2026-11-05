@@ -40,7 +40,7 @@ if (!vapidKeys) {
 }
 
 webPush.setVapidDetails(
-    'mailto:admin@tab-screen.local',
+    'mailto:admin@tab-dashboard.local',
     vapidKeys.publicKey,
     vapidKeys.privateKey
 );
@@ -140,7 +140,7 @@ app.post('/api/push/send', async (req, res) => {
     }
 
     const payload = JSON.stringify({
-        title: title || 'Tab Screen',
+        title: title || 'Tab Dashboard',
         body: body || '',
     });
 

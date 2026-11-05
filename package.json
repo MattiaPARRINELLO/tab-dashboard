@@ -1,9 +1,9 @@
 {
-  "name": "tab-screen",
+  "name": "tab-dashboard",
   "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
+  "description": "Tableau de bord temps réel : météo, musique et paroles synchronisées",
+  "license": "MIT",
+  "author": "Mattia Parrinello",
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
