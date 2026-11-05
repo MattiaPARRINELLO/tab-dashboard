@@ -1,3 +1,5 @@
+> Note de mise à jour (2026-11-05) : le dépôt et le projet sont désormais nommés `tab-dashboard`. La dépendance `fs@0.0.1-security` citée dans ce rapport a depuis été retirée. Le reste du texte est conservé tel qu'il a été produit.
+
 # Audit du projet : tab-screen
 
 **Date :** 2026-06-11

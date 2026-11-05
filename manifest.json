@@ -1,10 +1,10 @@
 {
-  "name": "Tab Screen",
-  "short_name": "TabScreen",
-  "description": "Envoyer des messages à l'écran",
-  "start_url": "/message.html",
+  "name": "Tab Dashboard",
+  "short_name": "Tab Dashboard",
+  "description": "Tableau de bord temps réel : météo, musique et paroles synchronisées",
+  "start_url": "/screen",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "background_color": "#07090f",
   "theme_color": "#a78bfa",
   "icons": [

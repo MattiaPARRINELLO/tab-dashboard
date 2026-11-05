@@ -130,13 +130,13 @@ Le serveur `server.js` sert les pages statiques de `public/`, expose l'API REST 
 
 ## Mode PWA
 
-- `manifest.json` déclare l'application en affichage `standalone`, en orientation portrait, avec le nom « Tab Screen ».
+- `manifest.json` déclare l'application en affichage `standalone`, en orientation paysage, avec le nom « Tab Dashboard ».
 - Le service worker `public/sw.js` est enregistré par `screen.html`.
 - Il précache `/message.html`, le manifeste et les icônes.
 - Les pages HTML sont servies en réseau d'abord, les fichiers statiques en cache d'abord, et les appels `/api/` passent toujours par le réseau.
 - Le service worker gère aussi l'événement `push` et ouvre `/screen` au clic sur une notification.
 
-Le manifeste démarre sur `/message.html` et non sur le tableau de bord. Pour installer l'application, ouvrir `/screen` depuis `localhost` ou depuis une origine HTTPS, les notifications push exigeant un contexte sécurisé.
+Le manifeste démarre directement sur `/screen`. Pour installer l'application, ouvrir `/screen` depuis `localhost` ou depuis une origine HTTPS, les notifications push exigeant un contexte sécurisé.
 
 ## Limites connues
 
@@ -146,7 +146,6 @@ Le manifeste démarre sur `/message.html` et non sur le tableau de bord. Pour in
 - La météo dépend d'une clé OpenWeather valide, les paroles de LRCLIB et les pochettes de Deezer ou Last.fm. Hors ligne, seuls la coquille statique et le cache du service worker restent disponibles.
 - L'historique des messages conserve l'adresse IP de l'expéditeur.
 - `cache/` contient les clés VAPID, les abonnements push et les données applicatives, dont la clé privée VAPID. Ce dossier est ignoré par Git et doit rester protégé.
-- L'heure des prévisions est formatée avec la locale du navigateur, ce qui peut afficher un format AM/PM selon le système.
 
 ## Licence
 

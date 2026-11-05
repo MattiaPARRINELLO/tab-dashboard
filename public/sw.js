@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tab-screen-v2';
+const CACHE_NAME = 'tab-dashboard-v2';
 const PRECACHE_URLS = [
   '/message.html',
   '/manifest.json',
@@ -78,14 +78,14 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'Tab Screen', body: 'Nouveau message' };
+  let data = { title: 'Tab Dashboard', body: 'Nouveau message' };
   if (event.data) {
     try {
       data = event.data.json();
     } catch { /* use defaults */ }
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Tab Screen', {
+    self.registration.showNotification(data.title || 'Tab Dashboard', {
       body: data.body || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png'
