@@ -245,7 +245,7 @@
       }
 
       .weather-condition {
-        font-size: clamp(1rem, 1.5vw, 1.25rem);
+        font-size: clamp(1.15rem, 1.7vw, 1.4rem);
         font-weight: 400;
         color: var(--text-secondary);
         text-align: center;
@@ -253,9 +253,9 @@
       }
 
       .weather-location {
-        font-size: clamp(0.8rem, 1vw, 0.9rem);
+        font-size: clamp(0.85rem, 1.1vw, 1rem);
         font-weight: 500;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         margin-top: 2px;
       }
 
@@ -278,19 +278,15 @@
         font-size: 0.9rem;
         font-weight: 600;
         color: var(--text-secondary);
-        margin-bottom: 10px;
+        margin-bottom: 8px;
       }
 
       .forecast-grid {
         display: grid;
         grid-template-columns: 1fr;
-        align-content: start;
+        grid-auto-rows: 1fr;
         flex: 1;
         min-height: 0;
-      }
-
-      #forecastCard.expanded .forecast-grid {
-        align-content: space-evenly;
       }
 
       .forecast-item {
@@ -298,8 +294,8 @@
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        gap: 12px;
-        padding: 7px 0;
+        gap: 14px;
+        padding: 5px 0;
         border-top: 1px solid var(--rule);
         min-width: 0;
       }
@@ -309,7 +305,7 @@
       }
 
       .forecast-time {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
         font-weight: 500;
         color: #b4b4b4;
         color: color-mix(in srgb, var(--accent) 45%, #ffffff 55%);
@@ -332,25 +328,26 @@
       }
 
       .forecast-icon {
-        width: 28px;
-        height: 28px;
+        width: 34px;
+        height: 34px;
         flex-shrink: 0;
       }
 
       .forecast-temp {
         flex: 0 0 auto;
-        font-size: 1.2rem;
+        font-size: 1.6rem;
         font-weight: 500;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
       }
 
       .forecast-desc {
+        display: none;
         flex: 1;
         min-width: 0;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 400;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         text-align: right;
         white-space: nowrap;
         overflow: hidden;
@@ -383,6 +380,7 @@
       }
 
       #forecastCard.expanded .forecast-desc {
+        display: block;
         font-size: 1rem;
       }
 
