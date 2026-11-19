@@ -438,7 +438,13 @@ app.get('/api/forecast', async (req, res) => {
             icon: weatherIconMap[f.weather[0].icon] || 'cloudy',
         }));
 
-        const payload = { list };
+        // 24 h de températures pour la courbe de la carte météo (pas de 3 h).
+        const hourly = data.list.slice(0, 8).map(f => ({
+            dt: f.dt,
+            temp: Math.round(f.main.temp),
+        }));
+
+        const payload = { list, hourly };
         weatherCache.forecast = { data: payload, ts: Date.now() };
         res.json(payload);
     } catch (err) {
