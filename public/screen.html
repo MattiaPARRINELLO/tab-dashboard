@@ -31,14 +31,14 @@
       }
 
       :root {
-        --bg-primary: #000000;
-        --bg-card: #111111;
-        --bg-panel: #1a1a1a;
-        --rule: #1f1f1f;
+        --bg-primary: #0a0a0b;
+        --bg-card: #141416;
+        --bg-panel: #1c1c1f;
+        --rule: #232326;
 
-        --text-primary: #ffffff;
-        --text-secondary: #b4b4b4;
-        --text-muted: #949494;
+        --text-primary: #f2f1ee;
+        --text-secondary: #b0afab;
+        --text-muted: #8e8d89;
 
         /* Couleur de l'album : primaire et accent */
         --album-r: 78;
@@ -200,9 +200,9 @@
 
       .time-display {
         font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
-        font-size: clamp(2.6rem, 5.4vw, 6.5rem);
-        font-weight: 600;
-        letter-spacing: -0.04em;
+        font-size: clamp(2.6rem, 5.2vw, 6.25rem);
+        font-weight: 500;
+        letter-spacing: -0.035em;
         line-height: 1;
         white-space: nowrap;
         color: var(--text-primary);
@@ -215,16 +215,17 @@
       }
 
       .time-seconds {
-        color: #b4b4b4;
-        color: color-mix(in srgb, var(--accent) 60%, #ffffff 40%);
+        color: #b0afab;
+        color: color-mix(in srgb, var(--accent) 45%, #f2f1ee 55%);
       }
 
       .date-display {
-        font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+        font-size: clamp(0.95rem, 1.2vw, 1.15rem);
         font-weight: 400;
         color: var(--text-secondary);
         text-align: center;
         line-height: 1.4;
+        letter-spacing: 0.01em;
       }
 
       /* ========== MÉTÉO ========== */
@@ -298,7 +299,7 @@
       .weather-chart text {
         font-family: "Inter", system-ui, sans-serif;
         font-size: clamp(12px, 0.75vw, 24px);
-        fill: #949494;
+        fill: #9a9994;
         font-variant-numeric: tabular-nums;
       }
 
@@ -312,7 +313,7 @@
       }
 
       .weather-chart .chart-grid {
-        stroke: #1f1f1f;
+        stroke: #232326;
         stroke-width: 1;
         vector-effect: non-scaling-stroke;
       }
@@ -342,9 +343,10 @@
       }
 
       .forecast-header {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--text-secondary);
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
         margin-bottom: 8px;
       }
 
@@ -374,8 +376,7 @@
       .forecast-time {
         font-size: 0.95rem;
         font-weight: 500;
-        color: #b4b4b4;
-        color: color-mix(in srgb, var(--accent) 45%, #ffffff 55%);
+        color: var(--text-secondary);
         font-variant-numeric: tabular-nums;
       }
 
@@ -706,10 +707,10 @@
       }
 
       .lyrics-line.active {
-        font-weight: 600;
+        font-weight: 500;
         color: var(--text-primary);
         opacity: 1;
-        background: rgba(255, 255, 255, 0.06);
+        background: transparent;
       }
 
       .lyrics-line.past {
@@ -1759,6 +1760,7 @@
           .then((data) => {
             forecastEl.innerHTML = "";
             const now = new Date();
+            let previousRelative = null;
             (data.list || []).forEach((f) => {
               const when = new Date(f.dt * 1000);
               const time = when.toLocaleTimeString("fr-FR", {
@@ -1785,8 +1787,14 @@
                 <span class="forecast-temp"></span>
                 <span class="forecast-desc"></span>
               `;
+              // La mention de jour n'apparaît qu'une fois, pas sur chaque ligne.
+              const showRelative = relative !== previousRelative;
+              previousRelative = relative;
+
               item.querySelector('.forecast-time').textContent = time;
-              item.querySelector('.forecast-rel').textContent = relative;
+              item.querySelector('.forecast-rel').textContent = showRelative
+                ? relative
+                : "\u00a0";
               const iconImg = item.querySelector('.forecast-icon');
               iconImg.src = `/weather-icons/${f.icon}.svg`;
               iconImg.alt = f.description || '';
